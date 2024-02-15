@@ -1,0 +1,88 @@
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: tensorboard
+  name: tensorboard
+  namespace: bds
+spec:
+  ports:
+    - port: 6006
+  selector:
+    app: tensorboard
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tensorboard
+  namespace: bds
+spec:
+  rules:
+  - host: tensorboard.purestorage.int
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tensorboard
+            port: 
+              number: 6006
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: bds
+  name: tensorboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tensorboard
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: tensorboard
+    spec:
+      volumes:
+        - name: workspace-vol
+          hostPath:
+            path: /fbd/jupyter
+      imagePullSecrets:
+        - name: regcred
+      containers:
+      - name: tensorboard
+        image: "harbor.purestorage.int/reddot/tensorflow:22.08-tf2-py3"
+        imagePullPolicy: Always
+        command: ["tensorboard"]
+        args: ["--logdir", "/ws/logs/tensorboard", "--bind_all"]
+        resources:
+          requests:
+            memory: "2G"
+            cpu: 100m
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: bds-s3
+              key: access-key
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: bds-s3
+              key: secret-key
+        - name: S3_ENDPOINT
+          value: 192.168.170.25
+        - name: S3_USE_HTTPS
+          value: "0"
+        - name: AWS_LOG_LEVEL
+          value: "3"
+        volumeMounts:
+          - name: workspace-vol
+            mountPath: /ws
