@@ -1,4 +1,4 @@
-FROM harbor.purestorage.int/reddot/python3:3.10
+FROM harbor.purestorage.int/reddot/python:3.10
 
 USER root
 

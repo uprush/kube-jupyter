@@ -1,4 +1,4 @@
-FROM 730335570797.dkr.ecr.ap-southeast-1.amazonaws.com/apache-spark:3.4.1-py
+FROM harbor.purestorage.int/reddot/apache-spark:3.4.1-py
 
 USER root
 

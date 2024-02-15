@@ -15,7 +15,7 @@ spec:
       image: gcr.io/kaniko-project/executor:latest
       args: 
         - "--context=s3://yifeng/kaniko/build.tar.gz"
-        - "--destination=harbor.purestorage.int/reddot/python3:3.10"
+        - "--destination=harbor.purestorage.int/reddot/python:3.10"
         - "--dockerfile=build/classic-ml.Dockerfile"
         - "--skip-tls-verify"
         - "--cache=true"

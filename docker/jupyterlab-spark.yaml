@@ -15,7 +15,7 @@ spec:
       image: gcr.io/kaniko-project/executor:latest
       args: 
         - "--context=s3://yifeng/kaniko/build.tar.gz"
-        - "--destination=730335570797.dkr.ecr.ap-southeast-1.amazonaws.com/jupyterlab:3.6.6-pyspark-3.4.1"
+        - "--destination=harbor.purestorage.int/reddot/jupyterlab:3.6.6-pyspark-3.4.1"
         - "--dockerfile=build/jupyterlab-spark.Dockerfile"
         - "--skip-tls-verify"
         - "--cache=true"
