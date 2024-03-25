@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jupyter-pytorch-ws
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: px-block-r2
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: jupyter-pytorch
+  name: jupyter-pytorch
+  namespace: default
+spec:
+  ports:
+    - port: 8888
+  selector:
+    app: jupyter-pytorch
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+
+# ---
+
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: jupyter-pytorch
+#   namespace: default
+# spec:
+#   rules:
+#   - host: jupyter-pytorch.purestorage.int
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: jupyter-pytorch
+#             port: 
+#               number: 8888
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  name: jupyter-pytorch
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyter-pytorch
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: jupyter-pytorch
+    spec:
+      volumes:
+        - name: workspace-vol
+          persistentVolumeClaim:
+            claimName: jupyter-pytorch-ws
+      imagePullSecrets:
+        - name: regcred
+      securityContext:
+        fsGroup: 1000
+      containers:
+      - name: jupyter-pytorch
+        image: "harbor.purestorage.int/reddot/pytorch-ocp:24.02-py3"
+        imagePullPolicy: IfNotPresent
+        command:
+          - /bin/bash
+          - -c
+          - |
+            jupyter lab \
+            --notebook-dir='/ws' \
+            --no-browser
+        resources:
+          requests:
+            memory: "8G"
+            cpu: 1
+          limits:
+            nvidia.com/gpu: 1
+        volumeMounts:
+          - name: workspace-vol
+            mountPath: /ws
