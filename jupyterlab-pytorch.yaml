@@ -94,7 +94,7 @@ spec:
             --LabApp.token='Flash4all!' --LabApp.ip='0.0.0.0' --LabApp.allow_root=True
         resources:
           requests:
-            memory: "64G"
+            memory: "32G"
             cpu: 8
           limits:
             nvidia.com/gpu: 2
@@ -125,6 +125,11 @@ spec:
             secretKeyRef:
               name: bds-s3
               key: secret-key
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-yijiang
+              key: api-key
         volumeMounts:
           - name: dataset-vol
             mountPath: /datasets

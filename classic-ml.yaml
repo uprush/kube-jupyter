@@ -93,8 +93,8 @@ spec:
           requests:
             memory: "32G"
             cpu: 4
-          limits:
-            nvidia.com/gpu: 1
+          # limits:
+          #   nvidia.com/gpu: 1
         env:
         - name: AWS_ACCESS_KEY_ID
           valueFrom:
