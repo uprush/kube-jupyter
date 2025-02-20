@@ -34,13 +34,13 @@ RUN python3 -m pip install --no-cache-dir \
 	flask \
 	category_encoders \
 	openai \
-	transformers \
+	transformers==4.43.1 \
 	accelerate \
 	einops \
-	langchain \
-	langchain_community \
-	bitsandbytes \
-	sentence_transformers \
+	langchain==0.2.5 \
+	langchain_community==0.2.5 \
+	bitsandbytes==0.43.1 \
+	sentence_transformers==3.0.1 \
 	chromadb \
 	pymilvus==2.4.1 \
 	pdfplumber \

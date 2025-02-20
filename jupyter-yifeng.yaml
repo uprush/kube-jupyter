@@ -1,0 +1,122 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jupyter-yifeng-ws
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: fb-nfs3
+
+---
+
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: jupyter-yifeng
+  name: jupyter-yifeng
+spec:
+  ports:
+    - port: 8888
+  selector:
+    app: jupyter-yifeng
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jupyter-yifeng
+spec:
+  rules:
+  - host: jupyter-yifeng.purestorage.int
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: jupyter-yifeng
+            port: 
+              number: 8888
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter-yifeng
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyter-yifeng
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: jupyter-yifeng
+    spec:
+      volumes:
+        - name: workspace-vol
+          persistentVolumeClaim:
+            claimName: jupyter-yifeng-ws
+        - name: model-vol
+          hostPath:
+            path: /fbd/deephub/models
+      imagePullSecrets:
+        - name: regcred
+      containers:
+      - name: jupyter-yifeng
+        image: "harbor.purestorage.int/reddot/pytorch:23.10-py3"
+        imagePullPolicy: Always
+        command:
+          - /bin/bash
+          - -c
+          - |
+            jupyter serverextension enable --py jupyterlab_s3_browser && \
+            jupyter lab --config='~/.jupyter/jupyter_notebook_config.json' \
+            --notebook-dir='/ws' \
+            --LabApp.token='pureuser' --LabApp.ip='0.0.0.0' --LabApp.allow_root=True
+        resources:
+          requests:
+            memory: "16G"
+            cpu: 2
+          limits:
+            nvidia.com/gpu: 1
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: yifeng-fbs
+              key: access-key
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: yifeng-fbs
+              key: secret-key
+        - name: S3_ENDPOINT
+          value: 192.168.170.101
+        - name: S3_USE_HTTPS
+          value: "0"
+        - name: JUPYTERLAB_S3_ENDPOINT
+          value: http://192.168.170.101
+        - name: JUPYTERLAB_S3_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: yifeng-fbs
+              key: access-key
+        - name: JUPYTERLAB_S3_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: yifeng-fbs
+              key: secret-key
+        volumeMounts:
+          - name: model-vol
+            mountPath: /models
+          - name: workspace-vol
+            mountPath: /ws
